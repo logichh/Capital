@@ -100,7 +100,12 @@ public class RnDSystem : MonoBehaviour
     private Dictionary<Business, List<ResearchProject>> businessProjects = new Dictionary<Business, List<ResearchProject>>();
     private Dictionary<Business, List<Patent>> businessPatents = new Dictionary<Business, List<Patent>>();
     private Dictionary<Business, List<Researcher>> businessResearchers = new Dictionary<Business, List<Researcher>>();
+
+
+    private readonly List<ResearchProject> defaultProjects = new List<ResearchProject>();
+
     private readonly List<ResearchProject> allProjects = new List<ResearchProject>();
+
 
     [SerializeField] private float baseResearchEfficiency = 1.0f;
 
@@ -117,8 +122,10 @@ public class RnDSystem : MonoBehaviour
 
     public void InitializeResearchProjects()
     {
+        defaultProjects.Clear();
+
         // Technology research projects
-        var projects = new List<ResearchProject>
+        defaultProjects.AddRange(new List<ResearchProject>
         {
             new ResearchProject("Basic Automation", "Improve production efficiency", "Technology", 50000f, 20, 0.9f),
             new ResearchProject("Advanced Materials", "Develop new material technologies", "Technology", 100000f, 30, 0.8f),
@@ -137,6 +144,27 @@ public class RnDSystem : MonoBehaviour
             // Patent research projects
             new ResearchProject("Patent Filing", "File for product patent", "Patent", 25000f, 10, 0.95f),
             new ResearchProject("Technology Patent", "Patent new technology", "Patent", 100000f, 25, 0.8f),
+
+            new ResearchProject("Process Patent", "Patent production process", "Patent", 75000f, 20, 0.85f)
+        });
+
+        // Add effects to projects
+        defaultProjects[0].AddEffect("ProductionEfficiency", 0.2f); // Basic Automation
+        defaultProjects[1].AddEffect("MaterialQuality", 0.3f); // Advanced Materials
+        defaultProjects[2].AddEffect("AIEfficiency", 0.4f); // AI Integration
+
+        defaultProjects[3].AddEffect("ProductQuality", 0.25f); // Quality Improvement
+        defaultProjects[4].AddEffect("ProductFeatures", 0.3f); // Feature Development
+        defaultProjects[5].AddEffect("DesignInnovation", 0.5f); // Design Innovation
+
+        defaultProjects[6].AddEffect("ProcessEfficiency", 0.2f); // Lean Manufacturing
+        defaultProjects[7].AddEffect("LogisticsEfficiency", 0.3f); // Supply Chain Optimization
+        defaultProjects[8].AddEffect("Sustainability", 0.25f); // Green Technology
+
+        defaultProjects[9].AddEffect("PatentValue", 50000f); // Patent Filing
+        defaultProjects[10].AddEffect("PatentValue", 200000f); // Technology Patent
+        defaultProjects[11].AddEffect("PatentValue", 150000f); // Process Patent
+    }
             new ResearchProject("Process Patent", "Patent production process", "Patent", 75000f, 20, 0.85f)
         };
 
@@ -318,6 +346,25 @@ public class RnDSystem : MonoBehaviour
 
     public List<ResearchProject> GetAvailableProjects(Business business)
     {
+
+        var projects = new List<ResearchProject>();
+        foreach (var template in defaultProjects)
+        {
+            if (business.CompletedResearch.Contains(template.Name))
+                continue;
+
+            bool alreadyInProgress = businessProjects.ContainsKey(business) &&
+                                      businessProjects[business].Any(p => p.Name == template.Name);
+            if (alreadyInProgress)
+                continue;
+
+            var clone = new ResearchProject(template.Name, template.Description, template.Category,
+                                            template.BaseCost, template.DurationTicks, template.SuccessChance,
+                                            new List<string>(template.Prerequisites));
+            clone.Effects = new Dictionary<string, float>(template.Effects);
+            projects.Add(clone);
+        }
+        return projects;
         var availableProjects = new List<ResearchProject>();
 
         foreach (var project in allProjects)
