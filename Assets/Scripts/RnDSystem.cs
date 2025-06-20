@@ -100,6 +100,7 @@ public class RnDSystem : MonoBehaviour
     private Dictionary<Business, List<ResearchProject>> businessProjects = new Dictionary<Business, List<ResearchProject>>();
     private Dictionary<Business, List<Patent>> businessPatents = new Dictionary<Business, List<Patent>>();
     private Dictionary<Business, List<Researcher>> businessResearchers = new Dictionary<Business, List<Researcher>>();
+    private readonly List<ResearchProject> allProjects = new List<ResearchProject>();
 
     [SerializeField] private float baseResearchEfficiency = 1.0f;
 
@@ -156,12 +157,9 @@ public class RnDSystem : MonoBehaviour
         projects[10].AddEffect("PatentValue", 200000f); // Technology Patent
         projects[11].AddEffect("PatentValue", 150000f); // Process Patent
 
-        // Store projects for access
-        foreach (var project in projects)
-        {
-            // Projects will be available to all businesses
-            // Implementation will be per-business
-        }
+        // Store projects for global access
+        allProjects.Clear();
+        allProjects.AddRange(projects);
     }
 
     public bool StartResearchProject(Business business, ResearchProject project)
@@ -320,11 +318,20 @@ public class RnDSystem : MonoBehaviour
 
     public List<ResearchProject> GetAvailableProjects(Business business)
     {
-        // Return all projects that can be started by this business
         var availableProjects = new List<ResearchProject>();
-        
-        // This would be populated with the projects from InitializeResearchProjects
-        // For now, return empty list - will be implemented in UI
+
+        foreach (var project in allProjects)
+        {
+            bool alreadyCompleted = business.CompletedResearch.Contains(project.Name);
+            bool inProgress = businessProjects.ContainsKey(business) &&
+                              businessProjects[business].Any(p => p.Name == project.Name);
+
+            if (!alreadyCompleted && !inProgress && project.CanStart(business))
+            {
+                availableProjects.Add(project);
+            }
+        }
+
         return availableProjects;
     }
-} 
+}
