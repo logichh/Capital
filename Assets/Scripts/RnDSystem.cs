@@ -101,7 +101,11 @@ public class RnDSystem : MonoBehaviour
     private Dictionary<Business, List<Patent>> businessPatents = new Dictionary<Business, List<Patent>>();
     private Dictionary<Business, List<Researcher>> businessResearchers = new Dictionary<Business, List<Researcher>>();
 
+
     private readonly List<ResearchProject> defaultProjects = new List<ResearchProject>();
+
+    private readonly List<ResearchProject> allProjects = new List<ResearchProject>();
+
 
     [SerializeField] private float baseResearchEfficiency = 1.0f;
 
@@ -140,6 +144,7 @@ public class RnDSystem : MonoBehaviour
             // Patent research projects
             new ResearchProject("Patent Filing", "File for product patent", "Patent", 25000f, 10, 0.95f),
             new ResearchProject("Technology Patent", "Patent new technology", "Patent", 100000f, 25, 0.8f),
+
             new ResearchProject("Process Patent", "Patent production process", "Patent", 75000f, 20, 0.85f)
         });
 
@@ -159,6 +164,30 @@ public class RnDSystem : MonoBehaviour
         defaultProjects[9].AddEffect("PatentValue", 50000f); // Patent Filing
         defaultProjects[10].AddEffect("PatentValue", 200000f); // Technology Patent
         defaultProjects[11].AddEffect("PatentValue", 150000f); // Process Patent
+    }
+            new ResearchProject("Process Patent", "Patent production process", "Patent", 75000f, 20, 0.85f)
+        };
+
+        // Add effects to projects
+        projects[0].AddEffect("ProductionEfficiency", 0.2f); // Basic Automation
+        projects[1].AddEffect("MaterialQuality", 0.3f); // Advanced Materials
+        projects[2].AddEffect("AIEfficiency", 0.4f); // AI Integration
+        
+        projects[3].AddEffect("ProductQuality", 0.25f); // Quality Improvement
+        projects[4].AddEffect("ProductFeatures", 0.3f); // Feature Development
+        projects[5].AddEffect("DesignInnovation", 0.5f); // Design Innovation
+        
+        projects[6].AddEffect("ProcessEfficiency", 0.2f); // Lean Manufacturing
+        projects[7].AddEffect("LogisticsEfficiency", 0.3f); // Supply Chain Optimization
+        projects[8].AddEffect("Sustainability", 0.25f); // Green Technology
+        
+        projects[9].AddEffect("PatentValue", 50000f); // Patent Filing
+        projects[10].AddEffect("PatentValue", 200000f); // Technology Patent
+        projects[11].AddEffect("PatentValue", 150000f); // Process Patent
+
+        // Store projects for global access
+        allProjects.Clear();
+        allProjects.AddRange(projects);
     }
 
     public bool StartResearchProject(Business business, ResearchProject project)
@@ -317,6 +346,7 @@ public class RnDSystem : MonoBehaviour
 
     public List<ResearchProject> GetAvailableProjects(Business business)
     {
+
         var projects = new List<ResearchProject>();
         foreach (var template in defaultProjects)
         {
@@ -335,5 +365,20 @@ public class RnDSystem : MonoBehaviour
             projects.Add(clone);
         }
         return projects;
+        var availableProjects = new List<ResearchProject>();
+
+        foreach (var project in allProjects)
+        {
+            bool alreadyCompleted = business.CompletedResearch.Contains(project.Name);
+            bool inProgress = businessProjects.ContainsKey(business) &&
+                              businessProjects[business].Any(p => p.Name == project.Name);
+
+            if (!alreadyCompleted && !inProgress && project.CanStart(business))
+            {
+                availableProjects.Add(project);
+            }
+        }
+
+        return availableProjects;
     }
 }
