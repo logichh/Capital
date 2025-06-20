@@ -101,6 +101,8 @@ public class RnDSystem : MonoBehaviour
     private Dictionary<Business, List<Patent>> businessPatents = new Dictionary<Business, List<Patent>>();
     private Dictionary<Business, List<Researcher>> businessResearchers = new Dictionary<Business, List<Researcher>>();
 
+    private readonly List<ResearchProject> defaultProjects = new List<ResearchProject>();
+
     [SerializeField] private float baseResearchEfficiency = 1.0f;
 
     private void Awake()
@@ -116,8 +118,10 @@ public class RnDSystem : MonoBehaviour
 
     public void InitializeResearchProjects()
     {
+        defaultProjects.Clear();
+
         // Technology research projects
-        var projects = new List<ResearchProject>
+        defaultProjects.AddRange(new List<ResearchProject>
         {
             new ResearchProject("Basic Automation", "Improve production efficiency", "Technology", 50000f, 20, 0.9f),
             new ResearchProject("Advanced Materials", "Develop new material technologies", "Technology", 100000f, 30, 0.8f),
@@ -137,31 +141,24 @@ public class RnDSystem : MonoBehaviour
             new ResearchProject("Patent Filing", "File for product patent", "Patent", 25000f, 10, 0.95f),
             new ResearchProject("Technology Patent", "Patent new technology", "Patent", 100000f, 25, 0.8f),
             new ResearchProject("Process Patent", "Patent production process", "Patent", 75000f, 20, 0.85f)
-        };
+        });
 
         // Add effects to projects
-        projects[0].AddEffect("ProductionEfficiency", 0.2f); // Basic Automation
-        projects[1].AddEffect("MaterialQuality", 0.3f); // Advanced Materials
-        projects[2].AddEffect("AIEfficiency", 0.4f); // AI Integration
-        
-        projects[3].AddEffect("ProductQuality", 0.25f); // Quality Improvement
-        projects[4].AddEffect("ProductFeatures", 0.3f); // Feature Development
-        projects[5].AddEffect("DesignInnovation", 0.5f); // Design Innovation
-        
-        projects[6].AddEffect("ProcessEfficiency", 0.2f); // Lean Manufacturing
-        projects[7].AddEffect("LogisticsEfficiency", 0.3f); // Supply Chain Optimization
-        projects[8].AddEffect("Sustainability", 0.25f); // Green Technology
-        
-        projects[9].AddEffect("PatentValue", 50000f); // Patent Filing
-        projects[10].AddEffect("PatentValue", 200000f); // Technology Patent
-        projects[11].AddEffect("PatentValue", 150000f); // Process Patent
+        defaultProjects[0].AddEffect("ProductionEfficiency", 0.2f); // Basic Automation
+        defaultProjects[1].AddEffect("MaterialQuality", 0.3f); // Advanced Materials
+        defaultProjects[2].AddEffect("AIEfficiency", 0.4f); // AI Integration
 
-        // Store projects for access
-        foreach (var project in projects)
-        {
-            // Projects will be available to all businesses
-            // Implementation will be per-business
-        }
+        defaultProjects[3].AddEffect("ProductQuality", 0.25f); // Quality Improvement
+        defaultProjects[4].AddEffect("ProductFeatures", 0.3f); // Feature Development
+        defaultProjects[5].AddEffect("DesignInnovation", 0.5f); // Design Innovation
+
+        defaultProjects[6].AddEffect("ProcessEfficiency", 0.2f); // Lean Manufacturing
+        defaultProjects[7].AddEffect("LogisticsEfficiency", 0.3f); // Supply Chain Optimization
+        defaultProjects[8].AddEffect("Sustainability", 0.25f); // Green Technology
+
+        defaultProjects[9].AddEffect("PatentValue", 50000f); // Patent Filing
+        defaultProjects[10].AddEffect("PatentValue", 200000f); // Technology Patent
+        defaultProjects[11].AddEffect("PatentValue", 150000f); // Process Patent
     }
 
     public bool StartResearchProject(Business business, ResearchProject project)
@@ -320,11 +317,23 @@ public class RnDSystem : MonoBehaviour
 
     public List<ResearchProject> GetAvailableProjects(Business business)
     {
-        // Return all projects that can be started by this business
-        var availableProjects = new List<ResearchProject>();
-        
-        // This would be populated with the projects from InitializeResearchProjects
-        // For now, return empty list - will be implemented in UI
-        return availableProjects;
+        var projects = new List<ResearchProject>();
+        foreach (var template in defaultProjects)
+        {
+            if (business.CompletedResearch.Contains(template.Name))
+                continue;
+
+            bool alreadyInProgress = businessProjects.ContainsKey(business) &&
+                                      businessProjects[business].Any(p => p.Name == template.Name);
+            if (alreadyInProgress)
+                continue;
+
+            var clone = new ResearchProject(template.Name, template.Description, template.Category,
+                                            template.BaseCost, template.DurationTicks, template.SuccessChance,
+                                            new List<string>(template.Prerequisites));
+            clone.Effects = new Dictionary<string, float>(template.Effects);
+            projects.Add(clone);
+        }
+        return projects;
     }
-} 
+}

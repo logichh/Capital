@@ -172,16 +172,24 @@ public class LogisticsSystem : MonoBehaviour
                             // Successfully deliver to warehouse
                             if (!warehouse.Inventory.ContainsKey(order.Supplier.MaterialType))
                                 warehouse.Inventory[order.Supplier.MaterialType] = 0;
-                            
+
                             warehouse.Inventory[order.Supplier.MaterialType] += order.Quantity;
                             business.ReduceLiability(order.TotalCost); // Remove from liabilities
-                            
+
                             // Affect product quality based on supplier quality
                             foreach (var product in business.Products)
                             {
                                 product.Quality *= 1 + (order.Supplier.Quality - 0.5f) * 0.1f;
                                 product.Quality = Mathf.Clamp(product.Quality, 0.5f, 2.0f);
                             }
+
+                            orders.RemoveAt(i);
+                        }
+                        else
+                        {
+                            // Delay delivery until space is available
+                            order.RemainingTicks = 1;
+                            Debug.Log($"No warehouse space for order from {order.Supplier.Name}. Delivery delayed.");
                         }
                     }
                     else
@@ -190,9 +198,8 @@ public class LogisticsSystem : MonoBehaviour
                         business.Capital += order.TotalCost;
                         business.ReduceLiability(order.TotalCost);
                         Debug.Log($"Order from {order.Supplier.Name} failed delivery!");
+                        orders.RemoveAt(i);
                     }
-
-                    orders.RemoveAt(i);
                 }
             }
         }
